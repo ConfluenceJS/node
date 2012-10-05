@@ -74,9 +74,7 @@ file
 
 for (var i = 0; i < 11; i++) {
   (function(i) {
-    console.error('write %d', i);
-    var ret = file.write('' + i);
-    console.error('ret=%j', ret);
+    file.write('' + i);
   })(i);
 }
 
