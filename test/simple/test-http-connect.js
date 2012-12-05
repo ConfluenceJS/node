@@ -38,12 +38,18 @@ server.on('connect', function(req, socket, firstBodyChunk) {
   socket.write('HTTP/1.1 200 Connection established\r\n\r\n');
 
   var data = firstBodyChunk.toString();
+  console.error('SERVER firstBodyChunk=%j', data);
+
   socket.on('data', function(buf) {
     data += buf.toString();
   });
+
   socket.on('end', function() {
+    console.error('SERVER data=%j', data);
     socket.end(data);
   });
+
+  req.resume();
 });
 server.listen(common.PORT, function() {
   var req = http.request({
@@ -71,23 +77,29 @@ server.listen(common.PORT, function() {
     // Make sure this socket has detached.
     assert(!socket.ondata);
     assert(!socket.onend);
+
     assert.equal(socket.listeners('connect').length, 0);
     assert.equal(socket.listeners('data').length, 0);
-    assert.equal(socket.listeners('end').length, 0);
+    // the stream.Duplex onend listener
+    assert.equal(socket.listeners('end').length, 1);
     assert.equal(socket.listeners('free').length, 0);
     assert.equal(socket.listeners('close').length, 0);
     assert.equal(socket.listeners('error').length, 0);
     assert.equal(socket.listeners('agentRemove').length, 0);
 
     var data = firstBodyChunk.toString();
+    console.error('CLIENT firstBodyChunk=%j', data);
     socket.on('data', function(buf) {
       data += buf.toString();
     });
+
     socket.on('end', function() {
+      console.error('CLIENT data=%j', data);
       assert.equal(data, 'HeadBody');
       assert(clientRequestClosed);
       server.close();
     });
+
     socket.write('Body');
     socket.end();
   });
